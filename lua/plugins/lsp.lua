@@ -16,24 +16,41 @@ return {
     lazy = false,
     config = true,
   },
-
-  -- LSP
+  {
+    "nvimtools/none-ls.nvim",
+    event = "VeryLazy",
+    depends = {
+      { "williamboman/mason.nvim" },
+    },
+  },
   {
     'neovim/nvim-lspconfig',
-    cmd = {'LspInfo', 'LspInstall', 'LspStart'},
-    event = {'BufReadPre', 'BufNewFile'},
+    cmd = { 'LspInfo', 'LspInstall', 'LspStart' },
+    event = { 'BufReadPre', 'BufNewFile' },
     dependencies = {
-      {'hrsh7th/cmp-nvim-lsp'},
-      {'williamboman/mason-lspconfig.nvim'},
+      { 'hrsh7th/cmp-nvim-lsp' },
+      { 'williamboman/mason-lspconfig.nvim' },
+      { 'jay-babu/mason-null-ls.nvim' },
+      { 'nvimtools/none-ls.nvim' },
     },
     config = function()
       -- This is where all the LSP shenanigans will live
       local lsp_zero = require('lsp-zero')
       lsp_zero.extend_lspconfig()
 
+      lsp_zero.format_on_save({
+          format_opts = {
+          async = false,
+          timeout_ms = 10000,
+        },
+        servers = {
+          ['null-ls'] = {'go', 'sql', 'terraform'},
+        },
+      })
+
       lsp_zero.on_attach(function(client, bufnr)
         local bind = function(keys, func, desc)
-          vim.keymap.set('n', keys, func, { buffer = bufnr, desc = desc})
+          vim.keymap.set('n', keys, func, { buffer = bufnr, desc = desc })
         end
         bind('<leader>rn', vim.lsp.buf.rename, 'LSP: [R]e[n]ame')
         bind('<leader>ca', vim.lsp.buf.code_action, 'LSP: [C]ode [A]ction')
@@ -63,6 +80,28 @@ return {
             require('lspconfig').lua_ls.setup(lua_opts)
           end,
         }
+      })
+
+      local null_ls = require('null-ls')
+      local null_opts = lsp_zero.build_options('null-ls', {})
+
+      null_ls.setup({
+        on_attach = function(client, bufnr)
+          null_opts.on_attach(client, bufnr)
+        end,
+        sources = {
+          null_ls.builtins.diagnostics.actionlint,
+          null_ls.builtins.formatting.clang_format,
+          null_ls.builtins.formatting.gofmt,
+          null_ls.builtins.formatting.pg_format,
+          null_ls.builtins.formatting.terraform_fmt,
+        },
+      })
+
+      require('mason-null-ls').setup({
+        ensure_installed = nil,
+        automatic_installation = false,
+        automatic_setup = true,
       })
     end
   }
