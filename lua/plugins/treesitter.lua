@@ -25,6 +25,7 @@ return {
           'markdown',
           'python',
           'sql',
+          'terraform',
           'tsx',
           'vim',
           'vimdoc'
