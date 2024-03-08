@@ -1,16 +1,7 @@
 -- LSP configs
+local augroup = vim.api.nvim_create_augroup("LspFormatting", {})
+
 return {
-  {
-    'VonHeikemen/lsp-zero.nvim',
-    branch = 'v3.x',
-    lazy = true,
-    config = false,
-    init = function()
-      -- Disable automatic setup, we are doing it manually
-      vim.g.lsp_zero_extend_cmp = 0
-      vim.g.lsp_zero_extend_lspconfig = 0
-    end,
-  },
   {
     'williamboman/mason.nvim',
     lazy = false,
@@ -19,9 +10,36 @@ return {
   {
     "nvimtools/none-ls.nvim",
     event = "VeryLazy",
-    depends = {
+    dependencies = {
       { "williamboman/mason.nvim" },
+      { "nvim-lua/plenary.nvim" },
     },
+    config = function()
+      local null_ls = require("null-ls")
+      null_ls.setup({
+        sources = {
+          null_ls.builtins.formatting.clang_format,
+          null_ls.builtins.formatting.gofumpt,
+          null_ls.builtins.formatting.goimports_reviser,
+          null_ls.builtins.formatting.alejandra,
+        },
+        on_attach = function(client, bufnr)
+          if client.supports_method("textDocument/formatting") then
+            vim.api.nvim_clear_autocmds({
+              group = augroup,
+              buffer = bufnr,
+            })
+            vim.api.nvim_create_autocmd("BufWritePre", {
+              group = augroup,
+              buffer = bufnr,
+              callback = function()
+                vim.lsp.buf.format({ bufnr = bufnr })
+              end,
+            })
+          end
+        end
+      })
+    end,
   },
   {
     'neovim/nvim-lspconfig',
@@ -34,75 +52,45 @@ return {
       { 'nvimtools/none-ls.nvim' },
     },
     config = function()
-      -- This is where all the LSP shenanigans will live
-      local lsp_zero = require('lsp-zero')
-      lsp_zero.extend_lspconfig()
+      local lspconfig = require("lspconfig")
 
-      lsp_zero.format_on_save({
-          format_opts = {
-          async = false,
-          timeout_ms = 10000,
-        },
-        servers = {
-          ['null-ls'] = {'go', 'sql', 'terraform'},
-        },
+      local cmp_lsp = require('cmp_nvim_lsp')
+      local capabilities = vim.tbl_deep_extend(
+        "force",
+        {},
+        vim.lsp.protocol.make_client_capabilities(),
+        cmp_lsp.default_capabilities())
+
+      lspconfig.util.default_config = vim.tbl_extend("force", lspconfig.util.default_config, {
+        capabilities = capabilities,
+        on_attach = require("config.lsp_keymaps"),
       })
 
-      lsp_zero.on_attach(function(client, bufnr)
-        local bind = function(keys, func, desc)
-          vim.keymap.set('n', keys, func, { buffer = bufnr, desc = desc })
-        end
-        bind('<leader>rn', vim.lsp.buf.rename, 'LSP: [R]e[n]ame')
-        bind('<leader>ca', vim.lsp.buf.code_action, 'LSP: [C]ode [A]ction')
+      lspconfig.lua_ls.setup {
+        settings = {
+          Lua = {
+              diagnostics = {
+                  globals = { "vim", "it", "describe", "before_each", "after_each" },
+              }
+          }
+        }
+      }
+      lspconfig.nixd.setup {}
+      lspconfig.gopls.setup {}
 
-        bind('gd', require('telescope.builtin').lsp_definitions, 'LSP: [G]oto [D]efinition')
-        bind('gr', require('telescope.builtin').lsp_references, 'LSP: [G]oto [R]eferences')
-        bind('gI', require('telescope.builtin').lsp_implementations, 'LSP: [G]oto [I]mplementation')
-        bind('<leader>D', require('telescope.builtin').lsp_type_definitions, 'LSP: Type [D]efinition')
-        bind('<leader>ds', require('telescope.builtin').lsp_document_symbols, 'LSP: [D]ocument [S]ymbols')
-        bind('<leader>ws', require('telescope.builtin').lsp_dynamic_workspace_symbols, 'LSP: [W]orkspace [S]ymbols')
-        bind('K', vim.lsp.buf.hover, 'LSP: Hover Documentation')
-        bind('<C-k>', vim.lsp.buf.signature_help, 'LSP: Signature Documentation')
-        bind('gD', vim.lsp.buf.declaration, 'LSP: [G]oto [D]eclaration')
-        bind('<leader>wa', vim.lsp.buf.add_workspace_folder, 'LSP: [W]orkspace [A]dd Folder')
-        bind('<leader>wr', vim.lsp.buf.remove_workspace_folder, 'LSP: [W]orkspace [R]emove Folder')
-        bind('<leader>wl', function()
-          print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
-        end, 'LSP: [W]orkspace [L]ist Folders')
-      end)
 
+      -- this will be removed eventually.
       require('mason-lspconfig').setup({
         ensure_installed = {},
         handlers = {
-          lsp_zero.default_setup,
-          lua_ls = function()
-            local lua_opts = lsp_zero.nvim_lua_ls()
-            require('lspconfig').lua_ls.setup(lua_opts)
+          function(server_name)
+            require("lspconfig")[server_name].setup {
+              capabilities = capabilities,
+              on_attach = require("config.lsp_keymaps"),
+            }
           end,
-        }
-      })
-
-      local null_ls = require('null-ls')
-      local null_opts = lsp_zero.build_options('null-ls', {})
-
-      null_ls.setup({
-        on_attach = function(client, bufnr)
-          null_opts.on_attach(client, bufnr)
-        end,
-        sources = {
-          null_ls.builtins.diagnostics.actionlint,
-          null_ls.builtins.formatting.clang_format,
-          null_ls.builtins.formatting.gofmt,
-          null_ls.builtins.formatting.pg_format,
-          null_ls.builtins.formatting.terraform_fmt,
         },
-      })
-
-      require('mason-null-ls').setup({
-        ensure_installed = nil,
-        automatic_installation = false,
-        automatic_setup = true,
-      })
-    end
+     })
+    end,
   }
 }

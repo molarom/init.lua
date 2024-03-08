@@ -6,11 +6,11 @@ return {
   opts = { use_diagnostic_signs = true },
   enabled = true,
   keys = {
-    { '<leader>xx', "<cmd> TroubleToggle document_diagnostics<CR>", desc = 'Trouble: [?] Show Document Diagnostics' },
-    { '<leader>xX', "<cmd> TroubleToggle workspace_diagnostics<CR>", desc = 'Trouble: [?] Show Workspace Diagnostics' },
-    { '<leader>xc', "<cmd> TroubleClose<CR>", desc = 'Trouble: [?] Close Trouble' },
-    { '<leader>xl', "<cmd> TroubleToggle loclist<CR>", desc = 'Trouble: [?] Show trouble in location list' },
-    { '<leader>xq', "<cmd> TroubleToggle quickfix<CR>", desc = 'Trouble: [?] Show trouble in quickfix' },
+    { '<leader>xx', "<cmd> TroubleToggle document_diagnostics<CR>", desc = 'Trouble: [xx] Show Document Diagnostics' },
+    { '<leader>xX', "<cmd> TroubleToggle workspace_diagnostics<CR>", desc = 'Trouble: [xX] Show Workspace Diagnostics' },
+    { '<leader>xc', "<cmd> TroubleClose<CR>", desc = 'Trouble: [xc] Close Trouble' },
+    { '<leader>xl', "<cmd> TroubleToggle loclist<CR>", desc = 'Trouble: [xl] Show trouble in location list' },
+    { '<leader>xq', "<cmd> TroubleToggle quickfix<CR>", desc = 'Trouble: [xq] Show trouble in quickfix' },
     {
       "[q",
       function()

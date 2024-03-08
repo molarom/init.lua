@@ -14,17 +14,13 @@ return {
       {'onsails/lspkind.nvim'},
     },
     config = function()
-      -- Here is where you configure the autocompletion settings.
-      local lsp_zero = require('lsp-zero')
-      lsp_zero.extend_cmp()
-
       -- And you can configure cmp even more, if you want to.
       local cmp = require('cmp')
-      local cmp_action = lsp_zero.cmp_action()
 
       require('luasnip.loaders.from_vscode').lazy_load()
 
       local compare = require('cmp.config.compare')
+      local cmp_select = { behavior = cmp.SelectBehavior.Select }
 
       require("lspkind").init({
         symbol_map = {
@@ -41,6 +37,11 @@ return {
           disabled = disabled or vim.g.cmp_disable
           return not disabled
         end,
+        snippet = {
+          expand = function(args)
+            require('luasnip').lsp_expand(args.body)
+          end,
+        },
         window = {
           completion = {
             winhighlight = 'Normal:Pmenu,FloatBorder:Pmenu,Search:None',
@@ -91,8 +92,8 @@ return {
             s = cmp.mapping.confirm({ select = true }),
             c = cmp.mapping.confirm({ behavior = cmp.ConfirmBehavior.Replace, select = true }),
           }),
-          ['<Tab>'] = cmp_action.tab_complete(),
-          ['<S-Tab>'] = cmp_action.select_prev_or_fallback(),
+          ['<Tab>'] = cmp.mapping.select_next_item(cmp_select),
+          ['<S-Tab>'] = cmp.mapping.select_next_item(cmp_select),
         },
         sorting = {
           comparators = {
