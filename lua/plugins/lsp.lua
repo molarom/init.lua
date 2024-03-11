@@ -77,6 +77,7 @@ return {
       }
       lspconfig.nixd.setup {}
       lspconfig.gopls.setup {}
+      lspconfig.clangd.setup {}
 
 
       -- this will be removed eventually.
