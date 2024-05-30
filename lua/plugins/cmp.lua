@@ -80,8 +80,7 @@ return {
         mapping = cmp.mapping.preset.insert {
           ['<C-d>'] = cmp.mapping.scroll_docs(-4),
           ['<C-f>'] = cmp.mapping.scroll_docs(4),
-          ['<C-Space>'] = cmp.mapping.complete {},
-          ['<CR>'] = cmp.mapping({
+          ['<C-j>'] = cmp.mapping({
             i = function(fallback)
               if cmp.visible() and cmp.get_active_entry() then
                 cmp.confirm({ behavior = cmp.ConfirmBehavior.Replace, select = false })
@@ -93,7 +92,7 @@ return {
             c = cmp.mapping.confirm({ behavior = cmp.ConfirmBehavior.Replace, select = true }),
           }),
           ['<Tab>'] = cmp.mapping.select_next_item(cmp_select),
-          ['<S-Tab>'] = cmp.mapping.select_next_item(cmp_select),
+          ['<S-Tab>'] = cmp.mapping.select_prev_item(cmp_select),
         },
         sorting = {
           comparators = {
@@ -111,9 +110,6 @@ return {
         },
         view = { entries = { name = 'custom', selection_order = 'near_cursor' } },
         experimental = { ghost_text = true },
-      })
-      cmp.setup.cmdline('/', {
-        sources = cmp.config.sources({ { name = 'buffer' } }),
       })
     end
   },
